@@ -29,7 +29,7 @@ mypdfdir=paste0(mygitdir,"/pdfs")
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(ggplot2,dplyr,patchwork,rnoaa)
 pacman::p_load(operators,topmodel,DEoptim,soilDB,sp,curl,httr,
-                 rnoaa,raster,shapefiles,rgdal,elevatr,terra,progress,lubridate, sf, stars)
+                 rnoaa,raster,shapefiles,rgdal,elevatr,terra,progress,lubridate)
 system("git config --global user.email 'cabaldwin2019@vt.edu ") 
 system("git config --global user.name 'cabaldwin' ")
 
@@ -51,7 +51,7 @@ pacman::p_load(EcoHydRology)
 setwd(datadir)
 
 #### USGS 01674500 MATTAPONI RIVER NEAR BEULAHVILLE, VA
-myflowgage_id="01673800"
+myflowgage_id="01674500"
 myflowgage=get_usgs_gage(myflowgage_id,begin_date = "2015-01-01",
                            end_date = "2019-01-01")
 
@@ -155,7 +155,7 @@ bboxpts
 bboxpts=SpatialPoints(bboxpts,proj4string = crs_utm)
 # From Lab04, get your DEM
 mydem=get_aws_terrain(locations=bboxpts@coords, 
-                        z = 11, prj = proj4_utm,src ="aws",expand=1)
+                        z = 12, prj = proj4_utm,src ="aws",expand=1)
 res(mydem)
 plot(mydem)
 plot(bboxpts,add=T)
@@ -203,7 +203,6 @@ plot(pourpoint,add=T,col="red")
 # sed -i -e 's/MPI_Type_extent(MPI_LONG, \&extent)/MPI_Aint lb\;MPI_Type_get_extent(MPI_LONG, \&lb, \&extent)/g' linklib.h
 # make
 
-
 rm("old_path")
 old_path <- Sys.getenv("PATH")
 old_path
@@ -238,7 +237,7 @@ plot(sd8)
 system("mpiexec -n 2 aread8 -p mydemp.tif -ad8 mydemad8.tif")
 ad8=raster("mydemad8.tif")
 plot(log(ad8))
-zoom(log(ad8), ext = zoomext2)
+zoom(log(ad8), ext = zoomext)
 plot(pourpoint, add=T)
 
 # Grid Network 
@@ -262,10 +261,10 @@ plot(log(sca))
 zoom(log(sca))
 
 
-system("mpiexec -n 2 threshold -ssa mydemad8.tif -src mydemsrc.tif -thresh 1000")
+system("mpiexec -n 2 threshold -ssa mydemad8.tif -src mydemsrc.tif -thresh 100")
 src=raster("mydemsrc.tif")
 plot(src)
-zoom(src,ext=zoomext2)
+zoom(src)
 
 outlet=SpatialPointsDataFrame(myflowgage$gagepoint_utm,
                                 data.frame(Id=c(1),outlet=paste("outlet",1,sep="")))
@@ -275,47 +274,34 @@ writeOGR(outlet,dsn=".",layer="approxoutlets",
 plot(pourpoint,add=T)
 
 
-system("mpiexec -n 2 moveoutletstostrm -p mydemp.tif -src mydemsrc.tif -o approxoutlets.shp -om outlet.shp")
+system("mpiexec -n 2 moveoutletstostrm -p mydemp.tif -src mydemsrc.tif -o approxoutlets.shp -om Outlet.shp")
 approxpt=readOGR("approxoutlets.shp")
-outlet2=readOGR("outlet.shp")
-plot(approxpt,add=T, col = "blue")
-zoomext2=myflowgage$gagepoint_utm@coords
-zoomext2=rbind(zoomext2,zoomext2+res(mydem)*10)
-zoomext2=rbind(zoomext2,zoomext2-res(mydem)*10)
-zoomext2=SpatialPoints(zoomext2,proj4string = crs_utm)  
-zoom(src,ext=zoomext2)
-
 plot(approxpt,add=T, col = "blue")
 
-plot(outlet2,add=T)
+plot(src)
+points(outpt$shp[2],outpt$shp[3],pch=19,col=2)
+points(approxpt$shp[2],approxpt$shp[3],pch=19,col=4)
 
-
-
-
+zoom(src)
 
 
 # Contributing area upstream of outlet
-system("mpiexec -n 2 aread8 -p mydemp.tif -o outlet.shp -ad8 mydemssa.tif")
+system("mpiexec -n 2 Aread8 -p mydemp.tif -o Outlet.shp -ad8 mydemssa.tif")
 ssa=raster("mydemssa.tif")
 plot(ssa) 
-zoom(ssa,ext=zoomext)
 
 
 # Threshold
 system("mpiexec -n 2 threshold -ssa mydemssa.tif -src mydemsrc1.tif -thresh 2000")
 src1=raster("mydemsrc1.tif")
 plot(src1)
-zoom(src1,ext=zoomext)
-
-
+zoom(src1)
 
 # Stream Reach and Watershed
-system("mpiexec -n 2 streamnet -fel mydemfel.tif -p mydemp.tif -ad8 mydemad8.tif -src mydemsrc1.tif -o outlet.shp -ord mydemord.tif -tree mydemtree.txt -coord mydemcoord.txt -net mydemnet.shp -w mydemw.tif")
+system("mpiexec -n 2 Streamnet -fel mydemfel.tif -p mydemp.tif -ad8 mydemad8.tif -src mydemsrc1.tif -o outlet.shp -ord mydemord.tif -tree mydemtree.txt -coord mydemcoord.txt -net mydemnet.shp -w mydemw.tif")
 plot(raster("mydemord.tif"))
 zoom(raster("mydemord.tif"))
 plot(raster("mydemw.tif"))
-zoom(raster("mydemw.tif"))
-
 
 
 
