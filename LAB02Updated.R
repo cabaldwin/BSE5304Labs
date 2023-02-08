@@ -316,7 +316,7 @@ plot(raster("mydemw.tif"))
 zoom(raster("mydemw.tif"))
 
 
-
+gitc
 
 
 
