@@ -85,7 +85,7 @@ CNmodel = function(BasinData,CNavg = 254,IaFrac = 0.05,fnc_slope=0,fnc_aspect=0,
   NSeff(CNmodeldf$Qpred,CNmodeldf$Qmm)
   
   plot(CNmodeldf$Qpred)
-  plot(CNmodeldf$Qmm)
+  lines(CNmodeldf$Qmm,type = "l",col="red")
   mean(CNmodeldf$Qmm)
   
   mean(CNmodeldf$Qpred)

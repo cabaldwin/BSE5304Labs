@@ -325,6 +325,11 @@ plot(TMWBdf$date,TMWBdf$PET)
 
 TMWBnew= TMWBmodel(TMWB)
 
+plot(TMWB$date,P,col="black")
+lines(TMWB$date,TMWB$Qmm,type = "l",col="red")
+lines(TMWB$date,TMWB$Qpred,col="blue")
+plot(TMWB$Qmm,TMWB$Qpred)
+
 # Calibrate for S
 
 BasinTMWB_JO=TMWBnew[(month(TMWBnew$date) > 5 
